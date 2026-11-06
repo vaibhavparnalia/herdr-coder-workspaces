@@ -1,0 +1,4 @@
+{
+  "global": { "cmd-shift-c": "mod.open:coder" },
+  "mod:coder": { "escape": "coder.close" }
+}
