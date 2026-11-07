@@ -4,11 +4,11 @@ A mod for the [Herdr](https://herdr.dev) desktop app that lists your [Coder](htt
 
 ![Coder workspaces in the Herdr app](preview.png)
 
-This mod isn't made by or affiliated with Coder.
+This is an independent, community-made mod. It isn't made by, affiliated with, or endorsed by Coder.
 
 ## What it does
 
-For each workspace the window shows its state (running, starting, stopping, stopped, failed…), its template, whether it is outdated, when it will stop by itself, and the forwarded ports. It refreshes by itself: every 30 seconds, and every 3 seconds while something is changing.
+For each workspace the window shows its state (running, starting, stopping, stopped, failed…), its template, whether it is outdated, when it will stop by itself, and the forwarded ports. It refreshes by itself: every 30 seconds, and every 3 seconds while something is changing. It draws them the way Coder's own dashboard does: each state as a colored dot and word, a two-letter template avatar, and icon buttons with their keys, in your Herdr theme's colors, light or dark.
 
 | Key | Action | Offered when |
 |---|---|---|
@@ -26,7 +26,7 @@ For each workspace the window shows its state (running, starting, stopping, stop
 
 Every button shows its key, and a click does exactly what the key does. A workspace with an action under way shows what is happening (`Starting…`, `Stopping…`, `Updating…`) and no buttons until it settles or fails. When Coder can't be reached, isn't signed in, or isn't installed, the window says so in plain words and what to do next, and keeps the last list on screen, dimmed, when it has one.
 
-Port forwards run as a tab in a space on this computer (one named "Coder" if you have it, otherwise your first), started in the background without moving your view. The row shows a `⇄ 3000` for each; selecting it brings the tab into view, and closing the tab ends the forward.
+Port forwards run as a tab in a space on this computer (one named "Coder" if you have it, otherwise your first), started in the background without moving your view. The row shows a port badge for each, with its port (`3000`); selecting it brings the tab into view, and closing the tab ends the forward.
 
 ## What you need
 

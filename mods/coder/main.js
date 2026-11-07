@@ -651,6 +651,8 @@ export default class Coder extends View {
       .track_focus(this.handle)
       .on_key_down((event, cx) => this.onKey(event, cx))
       .w_full()
+      .rounded(10)
+      .overflow_hidden()
       .bg(t.popover)
       .text_color(t.foreground)
       .text_size(13)

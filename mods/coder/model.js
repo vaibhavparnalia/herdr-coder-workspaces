@@ -132,25 +132,30 @@ export function normalizeWorkspaces(list, now) {
 // Rows: what each workspace looks like (data-model.md, "State groups and order", "Row detail")
 // ---------------------------------------------------------------------------------------------
 
-const SPINNER = Object.freeze({ shape: "spinner", color: "working" });
-const STOPPED_LOOK = Object.freeze({ shape: "hollow", color: "idle" });
+// Each state's look is one of Coder's status kinds, as its dashboard shows them: a tone (success,
+// pending, inactive, warning, failed; look.js gives each its theme color) and whether its dot
+// moves, which only work in progress does.
+const kind = (tone, moving = false) => Object.freeze({ tone, moving });
+const STILL_GREY = kind("inactive");
+// The dashboard shows a workspace whose agents are unhealthy in its warning kind.
+const UNHEALTHY = kind("warning");
 
 // status -> its group, sort rank, indicator and word
 const LOOKS = {
-  running: { group: "running", rank: 0, indicator: { shape: "dot", color: "done" }, word: "Running" },
-  starting: { group: "progress", rank: 0, indicator: SPINNER, word: "Starting…" },
-  pending: { group: "progress", rank: 1, indicator: SPINNER, word: "Queued…" },
-  stopping: { group: "progress", rank: 1, indicator: SPINNER, word: "Stopping…" },
-  canceling: { group: "progress", rank: 1, indicator: SPINNER, word: "Canceling…" },
-  deleting: { group: "progress", rank: 1, indicator: SPINNER, word: "Deleting…" },
-  stopped: { group: "stopped", rank: 2, indicator: STOPPED_LOOK, word: "Stopped" },
-  canceled: { group: "stopped", rank: 2, indicator: STOPPED_LOOK, word: "Canceled" },
-  failed: { group: "failed", rank: 2, indicator: { shape: "cross", color: "blocked" }, word: "Failed" },
+  running: { group: "running", rank: 0, indicator: kind("success"), word: "Running" },
+  starting: { group: "progress", rank: 0, indicator: kind("pending", true), word: "Starting…" },
+  pending: { group: "progress", rank: 1, indicator: kind("pending", true), word: "Queued…" },
+  stopping: { group: "progress", rank: 1, indicator: kind("inactive", true), word: "Stopping…" },
+  canceling: { group: "progress", rank: 1, indicator: kind("inactive", true), word: "Canceling…" },
+  deleting: { group: "progress", rank: 1, indicator: kind("warning", true), word: "Deleting…" },
+  stopped: { group: "stopped", rank: 2, indicator: STILL_GREY, word: "Stopped" },
+  canceled: { group: "stopped", rank: 2, indicator: STILL_GREY, word: "Canceled" },
+  failed: { group: "failed", rank: 2, indicator: kind("failed"), word: "Failed" },
 };
 
 // A status this version has never heard of is shown as stopped, in its own words, not hidden.
 function lookOf(status) {
-  return LOOKS[status] ?? { group: "stopped", rank: 2, indicator: STOPPED_LOOK, word: status.charAt(0).toUpperCase() + status.slice(1) };
+  return LOOKS[status] ?? { group: "stopped", rank: 2, indicator: STILL_GREY, word: status.charAt(0).toUpperCase() + status.slice(1) };
 }
 
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -246,18 +251,21 @@ export function toRows(workspaces, now, state = {}) {
       const { detail, warning } = word
         ? { detail: formatElapsed(nowMs - pending.pressedAt.getTime()), warning: false }
         : detailOf(ws, look.group, nowMs);
+      const unhealthy = ws.status === "running" && !ws.healthy;
       const tags = [];
       if (ws.outdated) tags.push("outdated");
-      if (ws.status === "running" && !ws.healthy) tags.push("unhealthy");
+      if (unhealthy) tags.push("unhealthy");
       return {
         id: ws.id,
         ref: ws.ref,
         name: ws.name,
         template: ws.template,
+        avatar: avatarText(ws.template || ws.name),
         status: ws.status,
         group: look.group,
         rank: look.rank,
-        indicator: { ...look.indicator },
+        // A pending action looks like its build; otherwise an unhealthy running workspace is a warning.
+        indicator: { ...(unhealthy && !word ? UNHEALTHY : look.indicator) },
         word: word ?? look.word,
         detail,
         warning,
@@ -268,6 +276,20 @@ export function toRows(workspaces, now, state = {}) {
       };
     })
     .sort(compareRows);
+}
+
+// Graphemes where the engine can split them; the app's engine has no Intl, so there it is code points.
+const GRAPHEMES = typeof Intl !== "undefined" && typeof Intl.Segmenter === "function" ? new Intl.Segmenter("en", { granularity: "grapheme" }) : null;
+
+/**
+ * The two characters a row's avatar shows: the first two of `text`, in capitals, as Coder's
+ * dashboard shows a template that has no icon. An emoji counts as one character where the engine
+ * can tell (`segmenter`); otherwise each code point counts. "-" when there is nothing to show.
+ */
+export function avatarText(text, { segmenter = GRAPHEMES } = {}) {
+  const name = typeof text === "string" ? text.trim() : "";
+  const characters = segmenter ? Array.from(segmenter.segment(name), (part) => part.segment) : Array.from(name);
+  return characters.slice(0, 2).join("").trim().toUpperCase() || "-";
 }
 
 // ---------------------------------------------------------------------------------------------

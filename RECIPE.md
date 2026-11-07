@@ -1,6 +1,6 @@
 # Coder workspaces
 
-A small window that opens with Cmd+Shift+C anywhere in the Herdr app and lists your Coder workspaces: one row each, with its state, its template, when it will stop by itself and the ports forwarded to it. From the keyboard you start, stop, extend, update, forward a port to, or open VS Code on the highlighted workspace, and Esc closes the window.
+A small window that opens with Cmd+Shift+C anywhere in the Herdr app and lists your Coder workspaces, drawn the way Coder's own dashboard draws them: one row each, with its state as a colored dot and word, its template, when it will stop by itself and the ports forwarded to it. From the keyboard you start, stop, extend, update, forward a port to, or open VS Code on the highlighted workspace, and Esc closes the window. This is an independent, community-made mod. It isn't made by, affiliated with, or endorsed by Coder.
 
 ![Coder workspaces](preview.png)
 
@@ -8,38 +8,85 @@ This file is the brief: another agent with an empty folder can build the mod fro
 
 ## What you see
 
-**The window.** 440 px wide, drawn by the app as a movable window with the mod's content in it. It is as tall as its content, up to the end of the list (see below), and it reopens where it was left, including after a restart if it was open at quit. It takes the keyboard when it opens. Colors come from `theme()` only, so it follows light and dark: text is `foreground`, `muted` or `dim`; lines are `border`; state colors are `done`, `working`, `idle`, `blocked` and `accent`.
+**The window.** 440 px wide, drawn by the app as a movable window with the mod's content in it, and 10 px rounded corners. It is as tall as its content, up to the end of the list (see below), and it reopens where it was left, including after a restart if it was open at quit. It takes the keyboard when it opens; while it has it, its 1 px outline is `accent`, otherwise `border`. It is built from the components of Coder's own dashboard: its status dot, badges, outline buttons, keycaps and avatars.
 
-**The header**, two lines, 14 px padding at the sides and 8 px above and below, 3 px between the lines, and a 1 px `border` line under it.
-- *First line:* the Coder glyph (`icons/coder.svg`, 16 px, `accent`); the word "Coder" in semibold `foreground`, taking the free width; `updated HH:MM` (11 px, `dim`, 24-hour clock, the time of the last good refresh), followed by `· out of date` in `blocked` when the latest refresh failed; the Refresh control; and `Esc` (11 px, `dim`). The Refresh control is 24 px tall with 8 px padding, a 6 px radius and a 1 px `input` border, with 11.5 px `muted` text: the refresh icon (`icons/refresh.svg`, 12 px) and the letter `R`. While a refresh is under way its icon is the native spinner.
-- *Second line:* indented 24 px, 11.5 px `muted`: the deployment's host, then `·`, then the signed-in user. The host truncates, and the user is at most 150 px wide. If Coder lists but cannot say who is signed in, this line says `Couldn't read who is signed in` in `blocked`.
+**Colors** come from `theme()` only, so the window follows light and dark and the person's theme. A *tint* is a theme color made partly transparent: `#rrggbb` gains an alpha byte, and a `#rrggbbaa` color has its own alpha scaled. Words are `foreground` or `muted`, never `dim`, which is too faint on some themes. Coder's five status kinds are these theme colors, each at 4.5:1 or more on `popover` in Herdr's dark and light themes:
 
-**The list**, under the header. It stops growing at 672 px (about 8 rows) and scrolls from there. Each workspace is a row with 14 px padding at the sides and 10 px above and below, 6 px between its parts, and a 1 px `border` line under it. The selected row has the `selected` background, and a row under the pointer the `hover` background.
-- *First line* (8 px gaps): a 14 px indicator at 13 px (`●` in `done`, `✕` in `blocked`, `○` in `idle`, or a spinner in `working`); the workspace's name in semibold `foreground`, truncating, with a `!` in `blocked` after it when the workspace says it is unhealthy; the state word in the indicator's color; and the detail (at most 230 px, truncating) in `muted`, or `blocked` when it is a warning.
-- *Second line* (6 px gaps, indented 22 px, 11.5 px `dim`): the template's name, then `· outdated` in `accent` when the workspace is outdated, then one chip `⇄ <local port>` for each port forwarded to it. A chip is `accent` (`dim` while its forward is still starting), has 5 px of padding and a 4 px radius, and is `hover`-highlighted under the pointer.
-- *Buttons* (below, indented 22 px, 6 px gaps, wrapping): each is 26 px tall with 10 px padding, a 6 px radius, a 1 px `input` border, a `raised` background and 12 px `foreground` text. Its key letter comes first, in 11 px `dim`, then its name. A button the pointer is over is drawn at 88% opacity.
+| Kind | Color | Used for |
+|---|---|---|
+| success | `ansi2` (green) | running |
+| pending | `ansi6` (sky) | starting, queued; the `Outdated` badge |
+| inactive | `muted` (grey) | stopping, canceling, stopped, canceled, any state the mod doesn't know; notes |
+| warning | `working` (orange) | deleting; an unhealthy running workspace; a stop under 10 minutes |
+| failed | `blocked` (red) | failed; failures; `Out of date` |
 
-**A question** replaces a row's buttons while it is open: the question in `foreground`, then a solid primary button `Enter <verb>` (`solid` background, `solid_foreground` text) and `Esc Cancel`.
+**The header**: 14 px padding at the sides and 12 px above and below, and a 1 px `border` line under it. On the left is a 30 px tile (7 px radius, 1 px `border`, `raised` fill) holding the mod's mark (`icons/coder.svg`, 16 px, `foreground`). Then, 10 px later, two lines:
+- *First line*, 8 px gaps:
+  - `Coder` in 14 px semibold `foreground`, taking the free width;
+  - `updated HH:MM` (12 px `muted`, 24-hour clock, the time of the last good refresh);
+  - an `Out of date` badge (failed) when the latest refresh failed;
+  - the Refresh button, an outline button (see Buttons) holding `icons/refresh.svg` and the keycap `R`. While a refresh is under way, its icon turns once every 900 ms;
+  - an `Esc` keycap.
+- *Second line*, under the whole first line: the deployment's host, `·` and the signed-in user, in 12 px medium `muted`. The host truncates, and the user is at most 150 px wide. If Coder lists but can't say who is signed in, this line says `Couldn't read who is signed in` in `blocked`.
 
-**The port box** replaces the buttons too: the line `Forward port`, a 32 px input (8 px radius, 1 px `input` border, `background`, 13 px text) filled with `3000` and selected, the same two buttons (`Enter Forward`, `Esc Cancel`), and, when what was typed can't be used, `Enter a port (3000) or local:workspace (8080:3000).` in `blocked` and the input's border in `blocked`.
+**The list**, under the header. It stops growing at 672 px, about six rows with buttons, and scrolls from there. Each workspace is a row with 14 px padding at the sides and 12 px above and below, 10 px between its lines, and a 1 px `border` line under it. The selected row has the `selected` background, and a row under the pointer the `hover` background. The row's first part has three pieces, 12 px apart and top-aligned:
+- **The avatar**: a 32 px square (6 px radius, 1 px `border`, `raised` fill), with the first two characters of the template's name in capitals, in 12 px medium `muted`: `BA` for Base Template. A workspace whose template has no name uses its own name. This is Coder's avatar for a template without an icon.
+- **The name and template**: the workspace's name in 14 px semibold `foreground`, truncating, followed by its badges, 6 px apart. Under it, 3 px down, the template's name in 12 px medium `muted`, then one port badge per forward.
+- **The state**, in a column 170 px wide at the row's right, so the dots line up from row to row: the status dot, 8 px, then the state's word in 13 px medium in its kind's color. Under the word, indented 22 px, is the state's detail in 12 px medium `muted`, or in the warning kind when it is a warning. It truncates, and pointing at it shows the whole detail.
 
-**A message** under a row, 12 px, with a `×` (`dim`) to dismiss it: a failure's reason in `blocked`, or a note in `muted` that may end with an `accent` link.
+**The status dot**: a 14 px circle of its kind's color at 22% (the ring), with a 6 px circle of the color itself at its center. While work is in progress it pulses: its opacity swings from 35% to 100% and back every 1.2 s.
 
-**The whole window** can instead show: a spinner and `Loading workspaces…` before the first list; `The Coder command-line tool isn't installed.` with `Install ↗`; `Not signed in to Coder.` with `Run coder login <url> in a terminal, then press R.`; `Can't reach <host>.` with the reason and `Check your connection or VPN, then press R to retry.`; or `No workspaces yet.` with `Open the dashboard ↗`. Each problem has an `R Retry` button. When a problem comes with an earlier list, the list stays under it, dimmed to half opacity.
+**Badges**: 18 px tall, with 6 px padding at the sides, a 6 px radius, a 1 px border of their kind's color at 40%, a fill at 12%, and 11 px medium text in the color. The badges are `Outdated` (pending), `Unhealthy` (warning) and `Out of date` (failed).
+
+**Port badges**: `icons/port.svg` (12 px) and the local port, in `accent`, on a `raised` fill with a `border` outline, with `hover` under the pointer. A port badge is at 60% while its forward is starting.
+
+**Buttons**: under the name, indented 44 px to line up with it, 6 px apart on one line. There is one per action, each an outline button:
+- 28 px tall, with a 6 px radius, a 1 px `border`, no fill, and `hover` under the pointer;
+- holding the action's icon (14 px, `foreground`), or the text `+1h`, then its key as a keycap;
+- naming itself when pointed at: `Start workspace`, `Stop workspace`, `Open in VS Code`, `Add an hour before it stops`, `Forward a port`, `Update to the template's new version`, `Open in the Coder dashboard`, `Open the build log`.
+
+A *keycap* is 16 px tall and at least 16 wide, with 4 px padding at the sides, a 4 px radius, a `selected` fill and 11 px medium `muted` text.
+
+**A question** replaces a row's buttons while it is open: the question in 13 px `foreground`, then the confirm button and `Cancel`, 8 px apart, each with its label and a keycap (`Enter`, `Esc`).
+- Stop's confirm is *destructive*: a 1 px `blocked` border, a fill of `blocked` at 15%, and `foreground` semibold text.
+- Update's is *primary*: a `solid` fill with `solid_foreground` semibold text, and its keycap on `solid_foreground` at 16%.
+- Cancel is an outline button.
+
+**The port box** replaces the buttons too:
+- the line `Forward port`;
+- a 30 px input (6 px radius, 1 px `input` border, `background`, 13 px text), filled with `3000` and selected;
+- a primary `Forward` + `Enter`, and `Cancel` + `Esc`.
+
+When what was typed can't be used, `Enter a port (3000) or local:workspace (8080:3000).` shows in `blocked`, and the input's border turns `blocked`.
+
+**A message**, under a row (indented 44 px) or across the window, is an alert box. The box has a 6 px radius, 10 px padding at the sides and 8 px above and below, a 1 px border of its kind's color at 35%, and a fill at 10%. In it:
+- a 14 px icon: `icons/alert.svg` in `blocked` for a failure, `icons/info.svg` in `muted` for a note;
+- the text in 12 px, `blocked` for a failure and `foreground` for a note, with any link after it in `accent`;
+- a 20 px control holding `icons/x.svg` that dismisses it.
+
+**The whole window** can instead show one of these:
+- **Before the first list**: centered, `icons/spinner.svg` (16 px, `muted`) turning once every 900 ms, and `Loading workspaces…` in 13 px `muted`.
+- **A problem**: a 32 px tile, `blocked` at 12%, holding `icons/alert.svg` in `blocked`. Beside it:
+  - the message in 14 px semibold `foreground`: `The Coder command-line tool isn't installed.`, `Not signed in to Coder.` or `Can't reach <host>.`;
+  - the reason and the next step in 12 px `muted`: `Run coder login <url> in a terminal, then press R.`, or `Check your connection or VPN, then press R to retry.`;
+  - a `Retry` button (outline, the refresh icon, `Retry`, the keycap `R`), with `Install ↗` beside it when the tool is missing.
+
+  When a problem comes with an earlier list, the list stays under it, at half opacity and with no buttons.
+- **No workspaces**: centered, a 32 px neutral tile with the mark, `No workspaces yet.` in 13 px `muted`, and `Open the dashboard ↗`.
 
 ## How it behaves
 
 **States.** Rows are ordered by state, then by name ignoring case: running and starting first; then queued, stopping, canceling and deleting; then stopped, canceled and failed.
 
-| Status | Indicator | Word | Detail | Buttons |
+| Status | Dot | Word | Detail | Buttons |
 |---|---|---|---|---|
-| running | `●` `done` | Running | `stops in 7h 42m`, `no auto-stop` or `about to stop`; in `blocked` under 10 minutes; `· at limit` when +1h can't go further | Stop `X`, VS Code `V`, +1h `E`, Port… `P`, Update `U`, Open `O` |
-| starting | spinner `working` | Starting… | the time elapsed as `m:ss`, `· queued #N` while queued | none |
-| pending, stopping, canceling, deleting | spinner `working` | Queued…, Stopping…, Canceling…, Deleting… | the same | none |
-| stopped, canceled | `○` `idle` | Stopped, Canceled | `last built 13d ago` | Start `S`, Update `U`, Open `O` |
-| failed | `✕` `blocked` | Failed | `build #4 · <reason>` | Start `S`, Update `U`, Open `O`, Log `L` |
+| running | success, still; warning when the workspace says it is unhealthy, with an `Unhealthy` badge | Running | `stops in 7h 42m`, `no auto-stop` or `about to stop`; in the warning kind under 10 minutes; `· at limit` when +1h can't go further | Stop `X`, VS Code `V`, +1h `E`, Port… `P`, Update `U`, Open `O` |
+| starting | pending, pulsing | Starting… | the time elapsed as `m:ss`, `· queued #N` while queued | none |
+| pending, stopping, canceling, deleting | pulsing: pending for queued, inactive for stopping and canceling, warning for deleting | Queued…, Stopping…, Canceling…, Deleting… | the same | none |
+| stopped, canceled | inactive, still | Stopped, Canceled | `last built 13d ago` | Start `S`, Update `U`, Open `O` |
+| failed | failed, still | Failed | `build #4 · <reason>` | Start `S`, Update `U`, Open `O`, Log `L` |
 
-Update is offered only when the workspace is outdated, and +1h only when it can move the stop time later (see below). Open is `↗`, and Log is `Log ↗`.
+Update is offered only when the workspace is outdated, and +1h only when it can move the stop time later (see below). An outdated workspace carries the `Outdated` badge. The icons are a triangle for Start, a square for Stop, `<>` for VS Code, `+1h` as text, two arrows for Port…, a counter-clockwise arrow for Update, a box with an arrow for Open and a page for Log.
 
 **Keys**, while the window has the keyboard. Only exact chords count, so `cmd-s` and `shift-s` do nothing.
 - `↑` and `↓` move the selection without wrapping. It starts on the workspace selected last time, if it still exists, otherwise on the first row.
@@ -53,9 +100,9 @@ Update is offered only when the workspace is outdated, and +1h only when it can 
 - *VS Code* opens VS Code connected to the workspace. *Open* and *Log* open the workspace's page, or the failed build's log, in the browser; only `http` and `https` links are ever opened.
 - *Port…* opens the port box. `3000` forwards local 3000 to workspace 3000, and `8080:3000` forwards local 8080 to workspace 3000. Each side is a whole number from 1 to 65535.
 
-**While an action is under way** the row shows its word at once (`Starting…`, `Stopping…`, `Updating…`) with the elapsed time, and no buttons. It settles when the workspace's own state says so. When it ends, a notification says `<name> is running`, `<name> stopped` or `<name> updated`, or `Couldn't start <name>` (and likewise for stop and update) with the reason. After 90 s with no change the row says `No change yet.` with `Check the dashboard ↗`. A failure's reason stays under the row until dismissed.
+**While an action is under way** the row shows its word at once (`Starting…`, `Stopping…`, `Updating…`) with the elapsed time, and no buttons. Its dot looks like the build it started: pending and pulsing for Start and Update, inactive and pulsing for Stop. It settles when the workspace's own state says so. When it ends, a notification says `<name> is running`, `<name> stopped` or `<name> updated`, or `Couldn't start <name>` (and likewise for stop and update) with the reason. After 90 s with no change the row says `No change yet.` with `Check the dashboard ↗`. A failure's reason stays under the row until dismissed.
 
-**Forwards.** A forward is a terminal on this computer, started in the background without moving the person's view, as a tab named `<name> :<local port>` in a space named `Coder`, or, if there is no such space, in the first space on this computer, or in a new space named `Coder` if there is none. It is labelled so the mod can find it again, even after a restart. The chip shows `dim` for its first 10 seconds, then `accent`; clicking it brings the tab into view, and closing the tab ends the forward. A forward that stops within 10 seconds failed, and the row says `Port <local>: <reason>`, for example `bind: address already in use`, and removes the terminal.
+**Forwards.** A forward is a terminal on this computer, started in the background without moving the person's view, as a tab named `<name> :<local port>` in a space named `Coder`, or, if there is no such space, in the first space on this computer, or in a new space named `Coder` if there is none. It is labelled so the mod can find it again, even after a restart. Its port badge is at 60% for its first 10 seconds, then whole; clicking it brings the tab into view, and closing the tab ends the forward. A forward that stops within 10 seconds failed, and the row says `Port <local>: <reason>`, for example `bind: address already in use`, and removes the terminal.
 
 **Refreshing.** A refresh runs `coder list`. The next one starts 30 s after the last ends, or 3 s after while anything is in progress (a build, an action, a forward starting), and 30 s after a failed one. Only one runs at a time: `R` pressed during one is acknowledged and queues one more for when it ends, and pressing it again adds nothing. Nothing refreshes while the window is closed.
 
@@ -66,9 +113,10 @@ Update is offered only when the workspace is outdated, and +1h only when it can 
 **`keys.json`:** `{ "global": { "cmd-shift-c": "mod.open:coder" }, "mod:coder": { "escape": "coder.close" } }`.
 
 **Files**, plain JavaScript modules, no dependencies:
-- `model.js` imports nothing and never reads the clock (callers pass `now`). It decides everything: reading `coder list --output json` into workspaces, their rows, which actions each state offers, the countdowns and ages, the +1h rule, how a refresh is scheduled, how an action settles, how a typed port is read, every command's arguments, every link, and every sentence above.
+- `model.js` imports nothing and never reads the clock (callers pass `now`). It decides everything: reading `coder list --output json` into workspaces, their rows, which actions each state offers, the countdowns and ages, the +1h rule, how a refresh is scheduled, how an action settles, how a typed port is read, every command's arguments, every link, every sentence above, each row's status kind and whether its dot moves, and its avatar's two characters.
 - `coder.js` makes every call to the outside: the `coder` tool through `exec` (30 s limit), `hc` for forwards, `open` or `xdg-open` for links, and the app's `tab.rename`, `space.rename` and `pane.focus` commands through `run`.
-- `ui.js` builds the elements from what `model.js` decided, with `gpui-kit` and `gpui-base`. It decides nothing.
+- `look.js` imports nothing either. It holds the look's rules: the theme color of each status kind (`TONES`), how much each tinted part takes (`TINT`), `tint(color, alpha)`, each action's icon and name (`ACTION_LOOK`), and which kind of button confirms each question (`PROMPT_LOOK`).
+- `ui.js` builds the elements from what `model.js` and `look.js` decided, with `gpui-kit` and `gpui-base`, in Coder's components. It decides nothing.
 - `main.js` is the `View` class: the launcher, the window's state, the refresh timer, the keys and the wiring.
 
 **From `herdr`:** `exec`, `hc`, `home`, `run`, `window`, `closeOverlay`, `openOverlay`, `notify`, `props`, `shared`, `setShared`, `nextCommand` (it answers `close` and `refresh`), `spaces`, `terminals` and `theme`.
@@ -87,7 +135,23 @@ Update is offered only when the workspace is outdated, and +1h only when it can 
 | Forward | `hc run --bg --json --no-parent --no-notify --cwd <home> --label herdr.space=<id> --label herdr.tab=<id> --label coder.forward=<owner/name>@<L>:<R> -- /usr/bin/env coder port-forward <owner/name> --tcp <L>:<R> --disable-autostart`, then `hc get`, `hc read` and `hc rm` |
 | Open a link | `open <url>` on macOS, `xdg-open <url>` elsewhere |
 
-**Icons:** two SVGs of the mod's own, 16 by 16, a 1.5 stroke with round ends and joins, drawn in the text color. `coder.svg` is a rounded rectangle (`x=2 y=3 width=12 height=10 rx=2`) with a `>` prompt and an underscore inside it. `refresh.svg` is a three-quarter circle with an arrowhead.
+**Icons:** 13 SVGs of the mod's own in `icons/`, each 16 by 16 with `fill="none"`, `stroke="currentColor"` and a 1.5 stroke with round ends and joins, so they are drawn in the text color:
+
+| File | Shape | Used for |
+|---|---|---|
+| `coder.svg` | a rounded rectangle (`x=2 y=3 width=12 height=10 rx=2`) with a `>` prompt and an underscore | the mark |
+| `refresh.svg` | a three-quarter circle with an arrowhead, clockwise | Refresh, Retry |
+| `rotate.svg` | the same, counter-clockwise | Update |
+| `play.svg` | a triangle | Start |
+| `square.svg` | a rounded square | Stop |
+| `code.svg` | `<` and `>` | VS Code |
+| `port.svg` | two opposite arrows | Port… and port badges |
+| `external.svg` | a box with an arrow leaving its corner | Open |
+| `file.svg` | a page with a folded corner and two lines | Log |
+| `alert.svg` | a circle with `!` | failures |
+| `info.svg` | a circle with `i` | notes |
+| `x.svg` | two crossed strokes | dismissing a message |
+| `spinner.svg` | a three-quarter arc around the center | loading |
 
 ## Watch out
 
@@ -99,15 +163,20 @@ Update is offered only when the workspace is outdated, and +1h only when it can 
 - **Escape arrives twice**: once at the mod's key handler and once as the `coder.close` command. A press that has cancelled a question must not also close the window; ignore the second delivery for about 200 ms.
 - **Focus.** Calling `focus()` in `init` alone doesn't give the window the keyboard, because the element isn't drawn yet. Ask again about 250 ms later.
 - **Never act on a key with a modifier**, and never run a command through a shell. A workspace name is data, not a command.
-- **Nothing is stored or sent**: no token, no web API, no files read or written. Use only `theme()` colors, and only the two icons.
+- **Nothing is stored or sent**: no token, no web API, no files read or written. Use only `theme()` colors, or tints of them, and only the mod's own icons. Template icons would have to be fetched from the deployment, so every template gets the two-letter avatar instead.
+- **Animate natively.** The pulse is `.loop("opacity", { from: 0.35, to: 1, period: 1200 })` and the spinners are `svg(…).spin(900)`. Never use a timer that redraws: every redraw repaints the whole app window.
+- **The mod's engine has no `Intl`**, so the avatar counts code points, not graphemes.
+- **Some theme colors already have an alpha** (`border`, `hover`, `selected`). A tint scales the alpha they have; it doesn't add a second one.
+- **The state column has a fixed width** (170 px). Sized by its text, the dots would sit at a different place in each row.
 
 ## Done when
 
 - `herdr-app check` passes on the folder.
 - Cmd+Shift+C opens the window, and Esc closes it.
-- The list matches `coder list` for the person's own workspaces, with the right word, indicator and buttons for each state.
+- The list matches `coder list` for the person's own workspaces, with the right word, dot and buttons for each state, and the dots lined up in one column.
+- In the app's light theme, every word is still readable.
 - `O` on a workspace opens its page in the browser.
 - `R` refreshes, and the `updated` time changes.
 - Stop and Update on a running workspace ask first, and Esc cancels the question.
-- The port box forwards a port: a `⇄` chip appears on the row, and closing its tab ends the forward.
+- The port box forwards a port: a port badge appears on the row, and closing its tab ends the forward.
 - With `coder` signed out, the window says `Not signed in to Coder.` and what to run.
